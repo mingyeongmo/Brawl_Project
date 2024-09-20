@@ -1,36 +1,50 @@
-// app/page.tsx
-import React from "react";
+"use client";
 
-type PlayerData = {
+import { useEffect, useState } from "react";
+
+type Member = {
   name: string;
   trophies: number;
-  // 필요한 데이터 타입 정의
-};
-
-async function fetchPlayer(): Promise<PlayerData> {
-  const res = await fetch("https://api.brawlstars.com/v1/clubs/GC8RPLJP", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${process.env.BRAWL_API_TOKEN}`, // 서버 환경 변수 사용
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    // throw new Error("Failed to fetch player data");
-    console.log("hi");
-  }
-
-  return res.json();
 }
 
-export default async function Home() {
-  const player = await fetchPlayer();
+type ClubData = {
+  name: string;
+  members: Member[];
+}
+
+export default function Home() {
+  const [club, setClub] = useState<ClubData | undefined>();
+
+  useEffect(() => {
+    fetch("/api/player") // API Route 호출
+      .then((res) => res.json())
+      .then((data) => setClub(data))
+      .catch((error) => console.error("Error fetching club data:", error));
+  }, []);
+
+  if (!club) return <div>Loading...</div>;
+
+  console.log("club : ", club);
+
+  const memberInfo = club.members.map(
+    (member: { name: string; trophies: number }) => ({
+      name: member.name,
+      trophies: member.trophies,
+    })
+  );
 
   return (
     <div>
-      <h1>Player: {player.name}</h1>
-      <p>Trophies: {player.trophies}</p>
+      <h1>클럽 이름: {club.name}</h1>
+
+      {/* 멤버 리스트와 트로피 점수 출력 */}
+      <ul>
+        {memberInfo.map((member, index) => (
+          <li key={index}>
+            {member.name}: {member.trophies} 트로피
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
